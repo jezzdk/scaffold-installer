@@ -3,18 +3,17 @@
 namespace Jezzdk\Scaffold\Console;
 
 use GuzzleHttp\Client;
+use Illuminate\Filesystem\Filesystem;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use ZipArchive;
 
-class NewCommand extends Command
+class ScaffoldCommand extends Command
 {
     /**
      * Configure the command options.
@@ -25,10 +24,10 @@ class NewCommand extends Command
     {
         $this
             ->setName('new')
-            ->setDescription('Create a new Bedrock application')
-            ->addArgument('name', InputArgument::OPTIONAL)
-            ->addOption('dev', null, InputOption::VALUE_NONE, 'Installs the latest "development" release')
-            ->addOption('auth', null, InputOption::VALUE_NONE, 'Installs the Laravel authentication scaffolding')
+            ->setDescription('Create a new Bedrock application with Sage')
+            ->addArgument('project', InputArgument::REQUIRED, 'The directory name of the project')
+            ->addArgument('theme', InputArgument::REQUIRED, 'The directory name of the theme')
+            ->addOption('dist', 'd', InputOption::VALUE_OPTIONAL, 'Installs a specific release', '1.12.8')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forces install even if the directory already exists');
     }
 
@@ -45,7 +44,7 @@ class NewCommand extends Command
             throw new RuntimeException('The Zip PHP extension is not installed. Please install it and try again.');
         }
 
-        $name = $input->getArgument('name');
+        $name = $input->getArgument('project');
 
         $directory = $name && $name !== '.' ? getcwd().'/'.$name : getcwd();
 
@@ -55,18 +54,17 @@ class NewCommand extends Command
 
         $output->writeln('<info>Crafting application...</info>');
 
-        $this->download($zipFile = $this->makeFilename(), $this->getVersion($input))
+        $this->download($zipFile = $this->makeFilename(), $input->getOption('dist'))
              ->extract($zipFile, $directory)
-             ->prepareWritableDirectories($directory, $output)
+             ->moveFiles($directory)
              ->cleanUp($zipFile);
 
         $composer = $this->findComposer();
 
         $commands = [
-            $composer.' install --no-scripts',
-            //$composer.' run-script post-root-package-install',
-            //$composer.' run-script post-create-project-cmd',
-            //$composer.' run-script post-autoload-dump',
+            $composer.' install',
+            $composer.' run-script post-root-package-install',
+            'composer create-project roots/sage web/app/themes/' . $input->getArgument('theme')
         ];
 
         if ($input->getOption('no-ansi')) {
@@ -94,6 +92,9 @@ class NewCommand extends Command
         if ($process->isSuccessful()) {
             $output->writeln('<comment>Application ready! Build something amazing.</comment>');
         }
+
+        $filesystem = new Filesystem();
+        $filesystem->copy('../docker-compose.yml', $directory . DIRECTORY_SEPARATOR . 'docker-compose.yml');
 
         return 0;
     }
@@ -177,25 +178,6 @@ class NewCommand extends Command
     }
 
     /**
-     * Get the version that should be downloaded.
-     *
-     * @param  \Symfony\Component\Console\Input\InputInterface  $input
-     * @return string
-     */
-    protected function getVersion(InputInterface $input)
-    {
-        if ($input->getOption('dev')) {
-            return 'develop';
-        }
-
-        if ($input->getOption('auth')) {
-            return 'auth';
-        }
-
-        return 'master';
-    }
-
-    /**
      * Get the composer command for the environment.
      *
      * @return string
@@ -209,5 +191,28 @@ class NewCommand extends Command
         }
 
         return 'composer';
+    }
+
+    /**
+     * Move files up one level
+     *
+     * @param string $directory
+     * @return $this
+     */
+    protected function moveFiles($directory)
+    {
+        $filesystem = new Filesystem();
+
+        if ($subDirectories = $filesystem->directories($directory)) {
+            if (sizeof($subDirectories) === 1) {
+                $subDirectory = array_pop($subDirectories);
+
+                $filesystem->copyDirectory($subDirectory, $directory);
+
+                $filesystem->deleteDirectory($subDirectory);
+            }
+        }
+
+        return $this;
     }
 }
