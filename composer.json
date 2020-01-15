@@ -1,5 +1,5 @@
 {
-    "name": "jezzdk/scaffold",
+    "name": "jezzdk/scaffold-installer",
     "description": "WordPress + Bedrock + Sage + Docker scaffolding.",
     "keywords": ["wordpress", "bedrock", "sage", "docker"],
     "license": "MIT",
