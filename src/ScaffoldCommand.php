@@ -64,7 +64,7 @@ class ScaffoldCommand extends Command
         $commands = [
             $composer.' install',
             $composer.' run-script post-root-package-install',
-            'composer create-project roots/sage web/app/themes/' . $input->getArgument('theme')
+            'composer create-project roots/sage web/app/themes/'.$input->getArgument('theme')
         ];
 
         if ($input->getOption('no-ansi')) {
@@ -94,7 +94,7 @@ class ScaffoldCommand extends Command
         }
 
         $filesystem = new Filesystem();
-        $filesystem->copy('../docker-compose.yml', $directory . DIRECTORY_SEPARATOR . 'docker-compose.yml');
+        $filesystem->copy(__DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'docker-compose.yml', $directory.DIRECTORY_SEPARATOR.'docker-compose.yml');
 
         return 0;
     }
