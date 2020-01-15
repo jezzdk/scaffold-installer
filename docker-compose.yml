@@ -1,0 +1,44 @@
+version: "3"
+
+services:
+  webserver:
+    image: jezzdk/scaffold
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html
+    networks:
+      - default
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - mysql:/var/lib/mysql
+    networks:
+      - default
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - redis:/data
+    networks:
+      - default
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: "bridge"
+volumes:
+  mysql:
+    driver: "local"
+  redis:
+    driver: "local"
