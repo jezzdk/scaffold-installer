@@ -1,0 +1,33 @@
+{
+    "name": "jezzdk/scaffold",
+    "description": "WordPress + Bedrock + Sage + Docker scaffolding.",
+    "keywords": ["wordpress", "bedrock", "sage", "docker"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jess Stopa",
+            "email": "jess@stopa.dk"
+        }
+    ],
+    "require": {
+        "php": "^7.2.9",
+        "ext-zip": "*",
+        "guzzlehttp/guzzle": "^6.0",
+        "symfony/console": "^4.0|^5.0",
+        "symfony/filesystem": "^4.0|^5.0",
+        "symfony/process": "^4.2|^5.0"
+    },
+    "bin": [
+        "bin/scaffold"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Jezzdk\\Scaffold\\Console\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
